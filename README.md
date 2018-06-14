@@ -1,3 +1,3 @@
 # multi-view-gaze
 
-Multi-view gaze dataset will be prepared soon.
+Multi-view gaze dataset and code will be prepared soon.
