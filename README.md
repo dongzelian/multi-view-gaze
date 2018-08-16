@@ -2,7 +2,7 @@
 
 "Multi-view Multi-task Gaze Estimation with Deep Convolutional Neural Networks"
 
-This paper is accepted by TNNLS 2018.
+This paper is accepted by IEEE Transactions on Neural Networks and Learning Systems (TNNLS) 2018.
 
 Our ShanghaiTechGaze dataset will coming soon.
 
