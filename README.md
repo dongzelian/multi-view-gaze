@@ -42,7 +42,7 @@ TODO: add multi-view multi-task implementation and inference code with our pretr
 
 ```
 @article{lian2018tnnls,
-    Author    = {Dongze Lian, Shenghua Gao, Lina Hu, Weixin Luo, Yanyu Xu, Lixin Duan, Jingyi Yu.},
+    Author    = {Dongze Lian, Lina Hu, Weixin Luo, Yanyu Xu, Lixin Duan, Jingyi Yu, Shenghua Gao.},
     Title     = {Multi-view Multi-task Gaze Prediction with Deep Convolutional Neural Networks.},
     Journal   = {TNNLS},
     Year      = {2018}
