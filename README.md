@@ -14,20 +14,22 @@ About UT Multiview dataset, please refer to the paper: "[Learning-by-Synthesis f
 # Usage
 ## Training our code
 
-single-view in the ShanghaiTechGaze dataset 
+single-view on our ShanghaiTechGaze dataset 
 ```
 python Train_Single_View_ST.py
 ```
 
-multi-view in the ShanghaiTechGaze dataset 
+multi-view on our ShanghaiTechGaze dataset 
 ```
 python Train_Multi_View_ST.py
 ```
 
-multi-view multi-task in the ShanghaiTechGaze and MPIIGaze dataset 
+multi-view multi-task on the ShanghaiTechGaze and MPIIGaze dataset 
 ```
 python Train_Multi_View_Multi_Task_ST_MPII.py
 ```
+Sorry for the lack of pretrained model and partial code due to the migration of clustered environments.
+Now the author is rewriting and reimplementing the code and experiments.
 
 TODO: add multi-view multi-task implementation and inference code with our pretrained model.
 
