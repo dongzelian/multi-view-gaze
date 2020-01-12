@@ -10,6 +10,11 @@ About MPIIGaze dataset, please refer to the paper: "[Appearance-Based Gaze Estim
 
 About UT Multiview dataset, please refer to the paper: "[Learning-by-Synthesis for Appearance-based 3D Gaze Estimation](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6909631)".
 
+# Requirements
+- python >= 3.6
+- pytorch = 0.4.1
+- tensorboardX >= 1.4
+- torchvision >= 0.2.1
 
 # Usage
 ## Training our code
