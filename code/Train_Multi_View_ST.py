@@ -37,9 +37,7 @@ import pdb
 parser = argparse.ArgumentParser(description='Network and training parameters choices')
 # Network choices
 parser.add_argument('--network', type=str, default='ResNet-34', metavar='backbone')
-#parser.add_argument('--data_dir', type=str, default='/public/sist/home/liandz/datasets/Gaze/dataset/', metavar='NET',
-#                    help='dataset dir')
-parser.add_argument('--data_dir', type=str, default='/p300/datasets/Gaze/ShanghaiTechGaze/ShanghaiTechGaze/', metavar='NET',
+parser.add_argument('--data_dir', type=str, default='/path/to/ShanghaiTechGaze/', metavar='NET',
                     help='dataset dir')
 parser.add_argument('--camera', type=str, default='multiview', metavar='camera')
 parser.add_argument('--batch-size', type=int, default=32, metavar='N',
@@ -71,7 +69,7 @@ args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 
 # log path setting
-exp_path = os.path.join('/root/github/multi-view-gaze-copy/exps',
+exp_path = os.path.join('/path/to/multi-view-gaze/exps',
                          time.strftime('%Y-%m-%d-%H-%M', time.localtime(time.time())))
 if not os.path.exists(exp_path):
     os.makedirs(exp_path)
@@ -147,7 +145,6 @@ def train(train_loader, model, criterion, optimizer, epoch):
     model.train()
     end = time.time()
     for batch_idx, input in enumerate(train_loader):
-        pdb.set_trace()
         data_time.update(time.time() - end)
         data, target = tuple(input[:len(input)-1]), input[-1]
         if args.cuda:
@@ -347,7 +344,7 @@ for epoch in range(args.epochs):
 
     # ============================================ Training ===========================================
     logging.info('============ Train stage ============')
-    train(train_loader, model, criterion, optimizer, epoch)
+    #train(train_loader, model, criterion, optimizer, epoch)
 
     # =========================================== Evaluation ==========================================
     logging.info('============ Test stage ============')
