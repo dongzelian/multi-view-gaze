@@ -12,7 +12,7 @@ About UT Multiview dataset, please refer to the paper: "[Learning-by-Synthesis f
 
 # Requirements
 - python >= 3.6
-- pytorch = 0.4.1
+- pytorch >= 0.4.1
 - tensorboardX >= 1.4
 - torchvision >= 0.2.1
 
