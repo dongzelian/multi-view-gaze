@@ -2,10 +2,9 @@
 @author: Dongze Lian
 @contact: liandz@shanghaitech.edu.cn
 @software: PyCharm
-@file: Train_Single_View_ST.py
-@time: 2020/1/11 22:01
+@file: Train_Multi_View_ST.py
+@time: 2020/1/12 16:30
 """
-
 import sys
 sys.path.append('..')
 import argparse
@@ -42,9 +41,8 @@ parser.add_argument('--network', type=str, default='ResNet-34', metavar='backbon
 #                    help='dataset dir')
 parser.add_argument('--data_dir', type=str, default='/p300/datasets/Gaze/ShanghaiTechGaze/ShanghaiTechGaze/', metavar='NET',
                     help='dataset dir')
-parser.add_argument('--camera', type=str, default='leftcamera', metavar='camera',
-                    help='leftcamera, middlecamera, rightcamera (default: leftcamera)')
-parser.add_argument('--batch-size', type=int, default=128, metavar='N',
+parser.add_argument('--camera', type=str, default='multiview', metavar='camera')
+parser.add_argument('--batch-size', type=int, default=32, metavar='N',
                     help='input batch size for training (default: 64)')
 parser.add_argument('--test-batch-size', type=int, default=200, metavar='N',
                     help='input batch size for testing (default: 1)')
@@ -102,39 +100,41 @@ class GazeImageDataset(Dataset):
     def __init__(self, txt_file, txt_dir, transform=None):
         self.txt_dir = txt_dir
         self.transform = transform
-        self.lefteye_name_list = utils.txt2list(os.path.join(self.txt_dir, txt_file[0]))
-        self.righteye_name_list = utils.txt2list(os.path.join(self.txt_dir, txt_file[1]))
-        self.eyelocation_name_list = utils.txt2list(os.path.join(self.txt_dir, txt_file[2]))
-        self.gt_name_list = utils.txt2list(os.path.join(self.txt_dir, txt_file[3]))
-       # pdb.set_trace()
 
+        #TODO: modify interface
+        self.data_lists = []
+        for txt_file_i in txt_file:
+            self.data_lists.append(utils.txt2list(os.path.join(self.txt_dir, txt_file_i)))
 
     def __len__(self):
-        return len(self.lefteye_name_list)
+        return len(self.data_lists[0])
 
     def __getitem__(self, idx):
-        lefteye_name = args.data_dir + self.lefteye_name_list[idx]
-        righteye_name = args.data_dir + self.righteye_name_list[idx]
-        eyelocation_name = args.data_dir + self.eyelocation_name_list[idx]
-        gt_name = args.data_dir + self.gt_name_list[idx]
-
-        lefteye = Image.open(lefteye_name)
-        righteye = Image.open(righteye_name)
-        eyelocation = sio.loadmat(eyelocation_name)['eyelocation']
-        gt = sio.loadmat(gt_name)['xy_gt']
-        # ground truth normalization
-        gt[0] -= W_screen / 2
-        gt[1] -= H_screen / 2
-
-        sample = {}
+        input_list = []
+        for i, data_list in enumerate(self.data_lists):
+            if (i + 1) % 3 == 0:
+                input_list.append(sio.loadmat(args.data_dir + data_list[idx])['eyelocation'])
+            elif i == len(self.data_lists) - 1:
+                gt = sio.loadmat(args.data_dir + data_list[idx])['xy_gt']
+                gt[0] -= W_screen / 2
+                gt[1] -= H_screen / 2
+                input_list.append(gt)
+            else:
+                input_list.append(Image.open(args.data_dir + data_list[idx]))
 
         if self.transform:
-            sample['le'] = self.transform(lefteye)
-            sample['re'] = self.transform(righteye)
-            sample['eyelocation'] = torch.squeeze(torch.FloatTensor(eyelocation))
-            sample['gt'] = torch.FloatTensor(gt)
+            input_tran_list = []
+            for i, input in enumerate(input_list):
+                if (i + 1) % 3 == 0:
+                    input_tran_list.append(torch.squeeze(torch.FloatTensor(input)))
+                elif i == len(input_list) - 1:
+                    input_tran_list.append(torch.FloatTensor(input))
+                else:
+                    input_tran_list.append(self.transform(input))
+        else:
+            input_tran_list = input_list
 
-        return sample
+        return input_tran_list
 
 
 # training
@@ -147,10 +147,11 @@ def train(train_loader, model, criterion, optimizer, epoch):
     model.train()
     end = time.time()
     for batch_idx, input in enumerate(train_loader):
+        pdb.set_trace()
         data_time.update(time.time() - end)
-        data, target = (input['le'], input['re'], input['eyelocation']), input['gt']
+        data, target = tuple(input[:len(input)-1]), input[-1]
         if args.cuda:
-            data, target = (data[0].cuda(), data[1].cuda(), data[2].cuda()), target.cuda()
+            data, target = tuple(map(lambda x : x.cuda(), data)), target.cuda()
 
         output = model(*data)
         target = target.view(target.size(0), -1)
@@ -199,9 +200,9 @@ def test(test_loader, model, criterion, epoch, minimal_error):
         end = time.time()
         for batch_idx, input in enumerate(test_loader):
             data_time.update(time.time() - end)
-            data, target = (input['le'], input['re'], input['eyelocation']), input['gt']
+            data, target = tuple(input[:len(input) - 1]), input[-1]
             if args.cuda:
-                data, target = (data[0].cuda(), data[1].cuda(), data[2].cuda()), target.cuda()
+                data, target = tuple(map(lambda x: x.cuda(), data)), target.cuda()
 
             output = model(*data)
             target = target.view(target.size(0), -1)
@@ -279,7 +280,7 @@ H_screen = 33.62   # the height of screen
 
 
 #model = DN4Net.define_DN4Net(which_network=args.network)
-model = gazenet.GazeNet(backbone=args.network, pretrained=True)
+model = gazenet.GazeNet(backbone=args.network, view=args.camera, pretrained=True)
 #model = resnet.resnet34(pretrained=True)
 model = nn.DataParallel(model).cuda()
 
@@ -312,16 +313,20 @@ data_transforms = transforms.Compose([
     ])
 
 train_dataset = GazeImageDataset(
-    txt_file=[args.camera + '/lefteye.txt', args.camera + '/righteye.txt',
-              args.camera + '/eyelocation.txt', 'gt.txt'],
+    txt_file=['leftcamera/lefteye.txt', 'leftcamera/righteye.txt', 'leftcamera/eyelocation.txt',
+              'middlecamera/lefteye.txt', 'middlecamera/righteye.txt', 'middlecamera/eyelocation.txt',
+              'rightcamera/lefteye.txt', 'rightcamera/righteye.txt', 'rightcamera/eyelocation.txt',
+              'gt.txt'],
     txt_dir=args.data_dir + 'annotations/txtfile/train_txt/',
     transform=data_transforms)
 logging.info('The number of training data is: {}'.format(len(train_dataset)))
 
 
 test_dataset = GazeImageDataset(
-    txt_file=[args.camera + '/lefteye.txt', args.camera + '/righteye.txt',
-              args.camera + '/eyelocation.txt', 'gt.txt'],
+    txt_file=['leftcamera/lefteye.txt', 'leftcamera/righteye.txt', 'leftcamera/eyelocation.txt',
+              'middlecamera/lefteye.txt', 'middlecamera/righteye.txt', 'middlecamera/eyelocation.txt',
+              'rightcamera/lefteye.txt', 'rightcamera/righteye.txt', 'rightcamera/eyelocation.txt',
+              'gt.txt'],
     txt_dir=args.data_dir + 'annotations/txtfile/test_txt/',
     transform=data_transforms)
 logging.info('The number of testing data is: {}'.format(len(test_dataset)))
